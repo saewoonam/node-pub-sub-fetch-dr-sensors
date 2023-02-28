@@ -1,0 +1,41 @@
+4pumpA:
+  type: diode
+  calibration: DC2018
+  unit: V
+3pumpA:
+  type: diode
+  calibration: DC2018
+  unit: V
+4switchA:
+  type: diode
+  calibration: DC2018
+  unit: V
+3switchA:
+  type: diode
+  calibration: DC2018
+  unit: V
+4pumpB:
+  type: diode
+  calibration: DC2018
+  unit: V
+3pumpB:
+  type: diode
+  calibration: DC2018
+  unit: V
+4switchB:
+  type: diode
+  calibration: DC2018
+  unit: V
+3switchB:
+  type: diode
+  calibration: DC2018
+  unit: V
+4K:
+  type: diode
+  calibration: DT670
+  unit: V
+40K:
+  type: diode
+  calibration: DT670
+  unit: V
+

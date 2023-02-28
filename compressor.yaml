@@ -1,0 +1,60 @@
+OperatingState:
+  type: compressor
+  calibration: None
+  unit: None
+CompressorState:
+  type: compressor
+  calibration: None
+  unit: None
+WarningNumber:
+  type: compressor
+  calibration: None
+  unit: None
+AlarmNumber:
+  type: compressor
+  calibration: None
+  unit: None
+CoolantIn:
+  type: compressor
+  calibration: None
+  unit: F
+CoollantOut:
+  type: compressor
+  calibration: None
+  unit: F
+Oil:
+  type: compressor
+  calibration: None
+  unit: F
+Helium:
+  type: compressor
+  calibration: None
+  unit: F
+LowP:
+  type: compressor
+  calibration: None
+  unit: lbs
+LowPavg:
+  type: compressor
+  calibration: None
+  unit: lbs
+HighP:
+  type: compressor
+  calibration: None
+  unit: lbs
+HighPavg:
+  type: compressor
+  calibration: None
+  unit: lbs
+DeltaP:
+  type: compressor
+  calibration: None
+  unit: lbs
+MotorCur:
+  type: compressor
+  calibration: None
+  unit: A
+Hours:
+  type: compressor
+  calibration: None
+  unit: hours
