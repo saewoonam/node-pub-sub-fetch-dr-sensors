@@ -1,0 +1,28 @@
+mc:
+  type: resistor 
+  calibration: RO600
+  unit: V
+still_t:
+  type: resistor
+  calibration: RuO2Mean
+  unit: V
+condensor:
+  type: resistor
+  calibration: RuO2Mean
+  unit: V
+3headA:
+  type: resistor
+  calibration: ROX6951
+  unit: V
+4headA:
+  type: resistor
+  calibration: ROX6951
+  unit: V
+3headB:
+  type: resistor
+  calibration: ROX6951
+  unit: V
+4headB:
+  type: resistor
+  calibration: ROX6951
+  unit: V
