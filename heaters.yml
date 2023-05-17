@@ -1,0 +1,84 @@
+4PUMPA_HEATER_I:
+  type: heater
+  calibration: None
+  unit: mA
+4PUMPA_HEATER_V:
+  type: heater
+  calibration: None
+  unit: V 
+4PUMPA_HEATER_DAC:
+  type: heater
+  calibration: None
+  unit: none
+4PUMPA_HEATER_EN:
+  type: heater
+  calibration: None
+  unit: none
+3PUMPA_HEATER_I:
+  type: heater
+  calibration: None
+  unit: mA
+3PUMPA_HEATER_V:
+  type: heater
+  calibration: None
+  unit: V 
+3PUMPA_HEATER_DAC:
+  type: heater
+  calibration: None
+  unit: none
+3PUMPA_HEATER_EN:
+  type: heater
+  calibration: None
+  unit: none
+4PUMPB_HEATER_I:
+  type: heater
+  calibration: None
+  unit: mA 
+4PUMPB_HEATER_V:
+  type: heater
+  calibration: None
+  unit: V 
+4PUMPB_HEATER_DAC:
+  type: heater
+  calibration: None
+  unit: none
+4PUMPB_HEATER_EN:
+  type: heater
+  calibration: None
+  unit: none
+3PUMPB_HEATER_I:
+  type: heater
+  calibration: None
+  unit: mA 
+3PUMPB_HEATER_V:
+  type: heater
+  calibration: None
+  unit: V 
+3PUMPB_HEATER_DAC:
+  type: heater
+  calibration: None
+  unit: none
+3PUMPB_HEATER_EN:
+  type: heater
+  calibration: None
+  unit: none
+4SWITCHA_HEATER:
+  type: heater
+  calibration: None
+  unit: none
+3SWITCHA_HEATER:
+  type: heater
+  calibration: None
+  unit: none
+4SWITCHB_HEATER:
+  type: heater
+  calibration: None
+  unit: none
+3SWITCHB_HEATER:
+  type: heater
+  calibration: None
+  unit: none
+STILL:
+  type: heater
+  calibration: None
+  unit: none
