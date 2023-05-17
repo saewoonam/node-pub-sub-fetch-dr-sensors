@@ -23,6 +23,8 @@ function fetch_sensors(table) {
 
 sensor_dict = {...sensor_dict, ...fetch_sensors('compressor_list')};
 sensor_dict = {...sensor_dict, ...fetch_sensors('diode_list')};
+sensor_dict = {...sensor_dict, ...fetch_sensors('heaters_list')};
+sensor_dict = {...sensor_dict, ...fetch_sensors('lockins_list')};
 console.log(sensor_dict);
 
 const create = 'CREATE TABLE IF NOT EXISTS data ( TS INT, ID INT , READING REAL);'
@@ -44,6 +46,7 @@ async function run() {
     //  console.log('topic:', topic.toString(), 'received message:', JSON.stringify(data));
     //console.log("received a message related to:", topic, "containing message:", JSON.parse(msg.toString()));
     // console.log(Object.keys(data));
+    var print_time = true;
     
     //Object.keys(data).forEach( (element) => {
     var array = Object.keys(data).map( (element) => {
@@ -55,9 +58,13 @@ async function run() {
             return element.toUpperCase() == elt.toUpperCase();
         });
         if (idx === undefined) {
-            ;
+            if (element != 'TIME') {
+                if (print_time) console.log((new Date()).toLocaleString());
+                console.log(`     not found in database >>> ${element} <<<: ${data[element]}`);
+                print_time = false;
+            }
         } else {
-            console.log('found idx', idx, element, data.TIME, sensor_dict[idx]['id'], data[element]);
+            // console.log('found idx', idx, element, data.TIME, sensor_dict[idx]['id'], data[element]);
             var TS = data.TIME;
             var ID = sensor_dict[idx]['id'];
             var RAW = data[element];
@@ -66,14 +73,18 @@ async function run() {
             return [TS, ID, RAW];
         }
     });
-    console.log(array);
-    console.log(array[0]!==undefined);
+    // console.log(array[0]!==undefined);
     array = array.filter( elt => elt!==undefined);
+    // console.log(array);
     const insertMany = db.transaction( (items) => {
         for (const item of array) insert.run(item);
     });
     insertMany(array);
-    console.log('just inserted many');
+    if (print_time)
+        console.log((new Date()).toLocaleString(), 'just inserted', array.length);
+      else
+        console.log('inserted', array.length);
+    print_time = true;
   }
 }
 

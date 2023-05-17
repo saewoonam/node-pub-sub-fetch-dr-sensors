@@ -5,23 +5,29 @@ console.log("Publisher bound to port 3001")
 
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 urls = ['http://132.163.53.82:3000/query/status',
-    'http://132.163.53.82:3100/query/sensors'
+    'http://132.163.53.82:3100/query/sensors',
+    'http://132.163.53.82:3300/query/state',
+    'http://132.163.53.82:3400/lockins/query/sensors',
 ];
 
-
+var still_fetching = false;
 async function fetch_readings() {
     // var msg = await fetch('http://132.163.53.82:3000/query/status');
-    var data={'TIME': Date.now()/1000};
-    for (url of urls) {
-        console.log('fetch:', url, Date.now());
-        var msg = await fetch(url);
-        var response = await msg.json();
-        // console.log('main', response);
-        // data = Object.assign({}, data, response);
-        data = {...data, ...response};
-    }
-    sock.send(["DR_readings", JSON.stringify(data)])
-    // sock.send(["kitty cats", "meow!"]);
+    if (!still_fetching) {
+        still_fetching = true;
+        var data={'TIME': Date.now()/1000};
+        for (url of urls) {
+            console.log('fetch:', url, Date().toString());
+            var msg = await fetch(url);
+            var response = await msg.json();
+            console.log('main', response);
+            // data = Object.assign({}, data, response);
+            data = {...data, ...response};
+        }
+        sock.send(["DR_readings", JSON.stringify(data)])
+        // sock.send(["kitty cats", "meow!"]);
+        still_fetching = false;
+    } else { console.log('busy processing earlier requests'); }
     return response;
 }
 async function fetch_diode() {

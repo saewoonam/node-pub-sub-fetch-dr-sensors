@@ -117,6 +117,11 @@
   dependencies:
     "once" "^1.4.0"
 
+"everpolate@^0.0.3":
+  "integrity" "sha512-pz9Y4PD7tQgqgzfvZWSxjX7SIfvu7+44FM15vCGp7iQoomXVfO1lWU4uNvqb9uOcILtrPxyZmKCAM+U+uHdlsg=="
+  "resolved" "https://registry.npmjs.org/everpolate/-/everpolate-0.0.3.tgz"
+  "version" "0.0.3"
+
 "expand-template@^2.0.3":
   "integrity" "sha512-XYfuKMvj4O35f/pOXLObndIRvyQ+/+6AhODh+OKWj9S9498pHHn/IMszH+gt0fBCRWMNfk1ZSp5x3AifmnI2vg=="
   "resolved" "https://registry.npmjs.org/expand-template/-/expand-template-2.0.3.tgz"
@@ -227,6 +232,11 @@
   "version" "4.1.0"
   dependencies:
     "argparse" "^2.0.1"
+
+"ky@^0.33.3":
+  "integrity" "sha512-CasD9OCEQSFIam2U8efFK81Yeg8vNMTBUqtMOHlrcWQHqUX3HeCl9Dr31u4toV7emlH8Mymk5+9p0lL6mKb/Xw=="
+  "resolved" "https://registry.npmjs.org/ky/-/ky-0.33.3.tgz"
+  "version" "0.33.3"
 
 "lru-cache@^6.0.0":
   "integrity" "sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA=="
