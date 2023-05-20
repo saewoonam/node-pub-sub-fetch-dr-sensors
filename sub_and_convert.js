@@ -184,17 +184,42 @@ async function regulateHotPumps(pumpNames, converted_readings) {
     console.log(name, lookup(name, converted_readings));
     T = lookup(name, converted_readings);
     if (name == '4pumpA') 
-      await setHeaterIfNeeded(name, T, 45, 0.1, 1, 2);
+      await setHeaterIfNeeded(name, T, 45, 0.1, 1, 8);
     if (name == '3pumpA')
       await setHeaterIfNeeded(name, T, 45, 0.1, 2, 5);
       // await setHeaterIfNeeded(name, T, 45, 0.1, 2, 3);
     if (name == '4pumpB')
-      await setHeaterIfNeeded(name, T, 45, 0.1, 0, 5);
+      await setHeaterIfNeeded(name, T, 45, 0.1, 0, 7);
     if (name == '3pumpB')
       await setHeaterIfNeeded(name, T, 45, 0.1, 2, 5);
       // await setHeaterIfNeeded(name, T, 45, 0.1, 2, 3);
   }
 }
+
+async function checkOtherCycle(other_id, converted_readings) {
+  let testnames = buildNames('34',other_id, 'head')
+  var cold = true;
+  for (name of testnames) {
+    var T = lookup(name, converted_readings);
+    let thresh = 4;
+    cold = cold && (T<thresh);
+    console.log (name, T, T<thresh, cold);
+  }
+  if (!cold) {
+    let testnames = buildNames('34',[other_id+'_HEATER'], 'SWITCH')
+    console.log(testnames);
+    let setting;
+    for (name of testnames) {
+      let ch = nameToNumber[name].ch
+      setting = lookup(name, converted_readings);
+      console.log(name, ch, setting);
+      if (setting != 0) await setLPH(ch, 0);
+      else console.log(name, 'is already off');
+    }
+  }
+}
+
+
 function buildNames(pre, post, middle) {
     var ret=[];
     for (prefix of pre) {
@@ -293,15 +318,60 @@ async function run() {
       return true
     } else return false
   }
+  async function getXpumpsHot(cycle_id) {
+    let justEntered = check_justEntered()
+    await regulateHotPumps(['4pump'+cycle_id], converted_readings);
+    if (lookup('3switch'+cycle_id, converted_readings) < 12)
+      await regulateHotPumps(['3pump'+cycle_id], converted_readings);
+
+    testnames = buildNames('34', cycle_id, 'pump')
+    let pass = true;
+    for (name of testnames) {
+      T = lookup(name, converted_readings);
+      let target = 45
+      let margin = 0.25
+      let good = (T > (target-margin)) && (T<(target+margin))
+      pass = pass && good
+      console.log (name, T, pass);
+    }
+
+    targets = [6, 4];
+    testnames = buildNames('34',cycle_id, 'head');
+    console.log(testnames);
+    let idx = 0
+    let cold = pass;
+    for (name of testnames) {
+      T = lookup(name, converted_readings);
+      let thresh = targets[idx]
+      cold = cold && T < thresh && (T!==null);
+      console.log (name, T, thresh, T<thresh, (T!==null), cold);
+      idx += 1
+    }
+    return cold
+  }
+
+  async function turnoffXpumps(cycle_id) {
+    let justEntered = check_justEntered()
+    console.log(justEntered);
+    if (justEntered) {
+      await turnOffPumpHeater(['4PUMP'+cycle_id, '3PUMP'+cycle_id ], converted_readings);
+    }
+  }
+
   setState('waitForHeatswitchesToCool', true);
   setState('turnOn4Heatswitches', true)
   setState('turnOnAllPumps', true)
   setState('turnOn3Heatswitches', true)
   setState('startCycleA', true)
+  // setState('turnOnHeatswitch4A', true)
+  setState('turnOnHeatswitch3A', true)
   setState('getApumpsHot', true)
   // setState('turnoffApumps', true)
   // setState('startCycleB', true)
+  // setState('getBpumpsHot', true)
   // setState('turnoffBpumps', true)
+  // setState('turnOnHeatswitch4B', true)
+  // setState('turnOnHeatswitch3B', true)
 
   for await (const [topic, msg] of sock) {
     // console.log("received a message related to:", topic.toString(), "containing message:", msg); //, msg.toString())
@@ -422,8 +492,9 @@ async function run() {
     } else if (checkIfInState('startCycleA')) { 
       // Turn off heatswitches for A and wait for them to cool.
       let justEntered = check_justEntered()
+      let cycle_id = 'A'
       if (justEntered) {
-        let testnames = buildNames('34',['A_HEATER'], 'SWITCH')
+        let testnames = buildNames('34',[cycle_id+'_HEATER'], 'SWITCH')
         console.log(testnames);
         let setting;
         for (name of testnames) {
@@ -434,8 +505,19 @@ async function run() {
           else console.log(name, 'is already off');
         }
       }
+      // check that things got set to 0
+      let testnames = buildNames('34',[cycle_id+'_HEATER'], 'SWITCH')
       var cold = true;
-      let testnames = buildNames('43','A', 'switch')
+      let setting;
+      for (name of testnames) {
+        let ch = nameToNumber[name].ch
+        setting = lookup(name, converted_readings);
+        console.log(name, ch, setting);
+        cold = cold && (setting==0)
+        if (setting != 0) await setLPH(ch, 0);
+        else console.log(name, 'is already off');
+      }
+      testnames = buildNames('43',cycle_id, 'switch')
       for (name of testnames) {
         var T = lookup(name, converted_readings);
         let thresh = 12;
@@ -446,61 +528,60 @@ async function run() {
         setState('getApumpsHot', true)
       }
     } else if (checkIfInState('getApumpsHot')) {
+      let justEntered = check_justEntered()
       let cycle_id = 'A'
-      let justEntered = check_justEntered()
-      await regulateHotPumps(['4pump'+cycle_id], converted_readings);
-      if (lookup('3switchA', converted_readings) < 12)
-        await regulateHotPumps(['3pump'+cycle_id], converted_readings);
+      let cold = await getXpumpsHot(cycle_id);
+      let timeToWait = 30*60*1000 - elapsedTimeInState
 
-      testnames = buildNames('34', cycle_id, 'pump')
-      let pass = true;
-      for (name of testnames) {
-        T = lookup(name, converted_readings);
-        let good = (T > 44.9) && (T<45.1)
-        pass = pass && good
-        console.log (name, T, pass);
-      }
-
-      targets = [4, 6];
-      testnames = buildNames('34',cycle_id, 'head');
-      console.log(testnames);
-      let idx = 0
-      let cold = pass;
-      for (name of testnames) {
-        T = lookup(name, converted_readings);
-        let thresh = targets[idx]
-        cold = cold && T < thresh && (T!==null);
-        console.log (name, T, thresh, T<thresh, (T!==null), cold);
-        idx += 1
-      }
       if (cold) {
+        elapsedTimeInState = new Date() - enterStateTime;
         // go to next state
-        console.log('go to next state');
-        setState('turnoff'+cycle_id+'pumps', true)
+        if (timeToWait<0) {
+          console.log('go to next state');
+          setState('turnoff'+cycle_id+'pumps', true)
+        } else {
+          console.log('Still need to wait', timeToWait/1000, 'seconds'); 
+        }
+      } else {
+        console.log('Still need to wait', timeToWait/1000, 'seconds'); 
       }
+
     } else if (checkIfInState('turnoffApumps')) {
-      let justEntered = check_justEntered()
-      console.log(justEntered);
-      if (justEntered) {
-        await turnOffPumpHeater(['4PUMPA', '3PUMPA' ], converted_readings);
-      }
+      // let justEntered = check_justEntered()  // already done in turnoffXpumps
+      let cycle_id = 'A'
+      await turnoffXpumps(cycle_id);
+      let other_id = (cycle_id=='A') ? 'B':'A';
+      await checkOtherCycle(other_id, converted_readings)
       elapsedTimeInState = new Date() - enterStateTime;
       if (elapsedTimeInState > 30*1000) {
         // wait 30 seconds then turn on heatswitches for cycle A
-        setState('turnOnHeatswitch4A', true);
+        setState('turnOnHeatswitch4'+cycle_id, true);
       }
     } else if (checkIfInState('turnOnHeatswitch4A')) {
-      console.log('try to set LPH');
-      await setLPH(1, 231);
-      elapsedTimeInState = new Date() - enterStateTime;
+      let justEntered = check_justEntered()
+      cycle_id = 'A'
+      let ch = nameToNumber['4SWITCH'+cycle_id+'_HEATER'].ch
+      console.log('try to set LPH', ch);
+      await setLPH(ch, 231);
       var cold = lookup('3headA', converted_readings) < 6
+      
+      elapsedTimeInState = new Date() - enterStateTime;
+      cold = cold && ( (lookup('4headA', converted_readings) < 1.5) || (elapsedTimeInState > (30*60*1000))) 
+
       if (cold) {
         setState('turnOnHeatswitch3A', true);
       }
     } else if (checkIfInState('turnOnHeatswitch3A')) {
-      await setLPH(2, 231);
+      let justEntered = check_justEntered()
+      cycle_id = 'A'
+      let ch = nameToNumber['3SWITCH'+cycle_id+'_HEATER'].ch
+      console.log('try to set LPH', ch);
+      await setLPH(ch, 231);
+      let other_id = (cycle_id=='A') ? 'B':'A';
+      await checkOtherCycle(other_id, converted_readings)
       elapsedTimeInState = new Date() - enterStateTime;
-      if (elapsedTimeInState > 10*60*1000) {
+
+      if (elapsedTimeInState > 30*60*1000) {
         setState('startCycleB', true);
         enterStateTime = new Date();
       }
@@ -531,52 +612,63 @@ async function run() {
         setState('getBpumpsHot', true)
       }
     } else if (checkIfInState('getBpumpsHot')) {
-      let justEntered = check_justEntered()
-      await regulateHotPumps(['4pumpB'], converted_readings);
-      if (lookup('3switchB', converted_readings) < 12)
-        await regulateHotPumps(['3pumpB'], converted_readings);
-      targets = [4, 6];
-      testnames = buildNames('34','B', 'head');
-      console.log(testnames);
-      let idx = 0
-      let cold = true;
-      for (name of testnames) {
-        T = lookup(name, converted_readings);
-        let thresh = targets[idx]
-        cold = cold && T < thresh;
-        console.log (name, T, thresh, T<thresh, cold);
-        idx += 1
-      }
+      let cycle_id = 'B'
+      let cold = await getXpumpsHot(cycle_id);
+      let timeToWait = 30*60*1000 - elapsedTimeInState
+
       if (cold) {
+        elapsedTimeInState = new Date() - enterStateTime;
         // go to next state
-        console.log('go to next state');
-        setState('turnoffBpumps', true)
+        if (timeToWait<0) {
+          console.log('go to next state');
+          setState('turnoff'+cycle_id+'pumps', true)
+        } else {
+          console.log('Still need to wait', timeToWait/1000, 'seconds'); 
+        }
+      } else {
+        console.log('Still need to wait', timeToWait/1000, 'seconds'); 
       }
     } else if (checkIfInState('turnoffBpumps')) {
-      let justEntered = check_justEntered()
-      console.log(justEntered);
-      if (justEntered) {
-        await turnOffPumpHeater(['4PUMPB', '3PUMPB' ], converted_readings);
-      }
+      let cycle_id = 'B'
+      let other_id = (cycle_id=='A') ? 'B':'A';
+      await checkOtherCycle(other_id, converted_readings)
+      await turnoffXpumps(cycle_id);
       elapsedTimeInState = new Date() - enterStateTime;
       if (elapsedTimeInState > 30*1000) {
         // wait 30 seconds then turn on heatswitches for cycle A
-        setState('turnOnHeatswitch4B', true);
+        setState('turnOnHeatswitch4'+cycle_id, true);
       }
     } else if (checkIfInState('turnOnHeatswitch4B')) {
       let justEntered = check_justEntered()
-      console.log('try to set LPH');
-      await setLPH(3, 231);
+      let cycle_id = 'B'
+      let ch = nameToNumber['4SWITCH'+cycle_id+'_HEATER'].ch
+      console.log('try to set LPH', ch);
+      await setLPH(ch, 231);
+      // console.log('try to set LPH');
+      // await setLPH(3, 231);
+      var cold = lookup('3head'+cycle_id, converted_readings) < 6
+      
       elapsedTimeInState = new Date() - enterStateTime;
-      var cold = lookup('3headB', converted_readings) < 6
+      let timeToWait = 30*60*1000 - elapsedTimeInState
+
+      cold = cold && ( (lookup('4head'+cycle_id, converted_readings) < 1.5) || (timeToWait<0) )
+      console.log('Still need to wait', timeToWait/1000, 'seconds'); 
+
       if (cold) {
-        setState('turnOnHeatswitch3B', true);
+        setState('turnOnHeatswitch3'+cycle_id, true);
       }
     } else if (checkIfInState('turnOnHeatswitch3B')) {
       let justEntered = check_justEntered()
-      await setLPH(4, 231);
+      let cycle_id = 'B'
+      let ch = nameToNumber['3SWITCH'+cycle_id+'_HEATER'].ch
+      console.log('try to set LPH', ch);
+      await setLPH(ch, 231);
+      let other_id = (cycle_id=='A') ? 'B':'A';
+      await checkOtherCycle(other_id, converted_readings)
       elapsedTimeInState = new Date() - enterStateTime;
-      if (elapsedTimeInState > 10*60*1000) {
+      let timeToWait = 30*60*1000 - elapsedTimeInState
+      console.log('Still need to wait', timeToWait/1000, 'seconds'); 
+      if (elapsedTimeInState > 30*60*1000) {
         setState('startCycleA', true);
         enterStateTime = new Date();
       }
